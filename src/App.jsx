@@ -67,6 +67,8 @@ export default function App() {
         <OnboardingFlow 
           onComplete={handleOnboardingComplete}
           soundEnabled={soundEnabled}
+          authUser={authUser}
+          onLoginSuccess={handleLoginSuccess}
         />
       ) : (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -75,6 +77,7 @@ export default function App() {
               userData={userData}
               authUser={authUser}
               onOpenAuth={() => setIsAuthModalOpen(true)}
+              onLogout={handleLogout}
               exp={exp}
               streak={streak}
               onStartPractice={() => setActiveTab('studio')}

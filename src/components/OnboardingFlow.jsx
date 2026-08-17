@@ -1,19 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Check, Volume2, Search, Sparkles, Bell, ShieldCheck, User, Compass, Calendar, Award } from 'lucide-react';
+import { ArrowLeft, Check, Volume2, Search, Sparkles, Bell, ShieldCheck, User, Compass, Calendar, Award, Smartphone, Mail, ArrowRight, KeyRound } from 'lucide-react';
 import { LANGUAGES, getTranslation } from '../data/translations';
 import { ONBOARDING_STEPS } from '../data/onboardingQuestions';
 import { speechService } from '../services/speechService';
 import confetti from 'canvas-confetti';
 
-export function OnboardingFlow({ onComplete, soundEnabled }) {
+export function OnboardingFlow({ onComplete, soundEnabled, authUser, onLoginSuccess }) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [showSplash, setShowSplash] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Inline Authentication State inside Onboarding Step 1
+  const [authMethod, setAuthMethod] = useState('phone'); // 'phone' | 'email'
+  const [authStep, setAuthStep] = useState('input'); // 'input' | 'otp'
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [countryCode, setCountryCode] = useState('+91');
+  const [otp, setOtp] = useState(['5', '8', '2', '4']);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [authError, setAuthError] = useState('');
   
   // User Onboarding State
-  const [selectedLang, setSelectedLang] = useState('ta'); // Default to Tamil like in video, or English
+  const [selectedLang, setSelectedLang] = useState('ta'); // Default to Tamil like in video
   const [selectedLevel, setSelectedLevel] = useState(0);
-  const [profile, setProfile] = useState({ name: 'Gopi', gender: 'Male', age: '18-25' });
+  const [profile, setProfile] = useState({ 
+    name: authUser?.name || 'Gopi', 
+    gender: 'Male', 
+    age: '18-25' 
+  });
   const [motivations, setMotivations] = useState([3, 4]); // Daily English, Job interviews
   const [profession, setProfession] = useState(3); // Student
   const [timeline, setTimeline] = useState(2); // 6 Months
@@ -27,22 +41,44 @@ export function OnboardingFlow({ onComplete, soundEnabled }) {
   // Helper for dynamic translation
   const t = (key) => getTranslation(selectedLang, key);
 
-  // Splash screen timeout
+  // 1. Splash Screen Timeout & Entrance Animation
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-      if (soundEnabled) {
-        speechService.speak(getTranslation('en', 'langQuestion'));
+      // If user is ALREADY logged in, skip step 0 (auth) and go straight to step 1 (language selection)!
+      if (authUser) {
+        setCurrentStepIndex(1);
+        if (soundEnabled) {
+          speechService.speak(getTranslation('en', 'langQuestion'));
+        }
+      } else {
+        if (soundEnabled) {
+          speechService.speak("Welcome to SpeakX. Please login or register to begin your journey.");
+        }
       }
-    }, 2200);
+    }, 2400);
     return () => clearTimeout(timer);
-  }, []);
+  }, [authUser]);
+
+  // If user logs in during step 0, automatically advance to language selection
+  useEffect(() => {
+    if (authUser && currentStepIndex === 0 && !showSplash) {
+      setCurrentStepIndex(1);
+    }
+  }, [authUser, currentStepIndex, showSplash]);
+
+  // Update profile name if authUser changes
+  useEffect(() => {
+    if (authUser && authUser.name) {
+      setProfile(prev => ({ ...prev, name: authUser.name }));
+    }
+  }, [authUser]);
 
   // Voice narration whenever step changes
   useEffect(() => {
     if (!showSplash && soundEnabled && currentStep) {
       let speechText = t(currentStep.titleKey);
-      speechService.speak(speechText, selectedLang === 'en' ? 'en-US' : 'en-US');
+      speechService.speak(speechText);
     }
   }, [currentStepIndex, showSplash, selectedLang]);
 
@@ -77,15 +113,65 @@ export function OnboardingFlow({ onComplete, soundEnabled }) {
     }
   };
 
+  // Auth Handlers inside Onboarding
+  const handleSendOtp = (e) => {
+    e.preventDefault();
+    if (authMethod === 'phone') {
+      if (phoneNumber.length < 10) {
+        setAuthError('Please enter a valid 10-digit mobile number');
+        return;
+      }
+    } else {
+      if (!email.includes('@')) {
+        setAuthError('Please enter a valid email address');
+        return;
+      }
+    }
+    setAuthError('');
+    setAuthStep('otp');
+  };
+
+  const handleVerifyOtp = () => {
+    setIsVerifying(true);
+    setTimeout(() => {
+      setIsVerifying(false);
+      const user = {
+        id: 'usr_' + Math.random().toString(36).substring(2, 8),
+        name: authMethod === 'phone' ? `Gopi (${phoneNumber.slice(-4)})` : email.split('@')[0],
+        phone: authMethod === 'phone' ? `${countryCode} ${phoneNumber}` : null,
+        email: authMethod === 'email' ? email : null,
+        authProvider: authMethod
+      };
+      onLoginSuccess(user);
+      handleNext(); // Move directly to Native Language Selection!
+    }, 600);
+  };
+
+  const handleGoogleAuth = () => {
+    setIsVerifying(true);
+    setTimeout(() => {
+      setIsVerifying(false);
+      const googleUser = {
+        id: 'g_' + Math.random().toString(36).substring(2, 8),
+        name: 'Gopi Krishna',
+        email: 'gopi.speakx@gmail.com',
+        authProvider: 'google'
+      };
+      onLoginSuccess(googleUser);
+      handleNext(); // Move directly to Native Language Selection!
+    }, 500);
+  };
+
+  // 1. SPLASH SCREEN & LOGO ANIMATION
   if (showSplash) {
     return (
       <div className="splash-container">
-        <div className="splash-logo">S</div>
+        <div className="splash-logo" style={{ animation: 'pulse 1.5s infinite' }}>S</div>
         <h1 className="splash-title">SpeakX</h1>
         <p className="splash-tagline">KEY TO CONFIDENCE</p>
-        <div style={{ marginTop: '30px', display: 'flex', gap: '8px' }}>
+        <div style={{ marginTop: '36px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div className="voice-wave-dot" style={{ position: 'static', animation: 'pulse 1s infinite' }}></div>
-          <span style={{ fontSize: '0.9rem', opacity: 0.9 }}>Loading personalized AI tutor...</span>
+          <span style={{ fontSize: '0.9rem', opacity: 0.9 }}>Initializing SpeakX AI Platform...</span>
         </div>
       </div>
     );
@@ -128,9 +214,157 @@ export function OnboardingFlow({ onComplete, soundEnabled }) {
       {/* Question Title */}
       <h2 className="question-title">{t(currentStep.titleKey)}</h2>
 
-      {/* Step Content rendering */}
+      {/* STEP 1: LOGIN & AUTHENTICATION (Right after Splash!) */}
+      {currentStep.id === 'auth' && (
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '14px' }}>
+          {authStep === 'input' ? (
+                <>
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: 4 }}>
+                    Enter your mobile number or email to save your progress & unlock live AI practice.
+                  </p>
 
-      {/* STEP 1: Language Selection */}
+                  <div className="mode-toggle-group" style={{ width: '100%' }}>
+                    <button 
+                      className={`mode-btn ${authMethod === 'phone' ? 'active' : ''}`}
+                      onClick={() => setAuthMethod('phone')}
+                      style={{ flex: 1, justifyContent: 'center' }}
+                    >
+                      <Smartphone size={15} /> Phone
+                    </button>
+                    <button 
+                      className={`mode-btn ${authMethod === 'email' ? 'active' : ''}`}
+                      onClick={() => setAuthMethod('email')}
+                      style={{ flex: 1, justifyContent: 'center' }}
+                    >
+                      <Mail size={15} /> Email
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {authMethod === 'phone' ? (
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <select 
+                          value={countryCode} 
+                          onChange={(e) => setCountryCode(e.target.value)}
+                          style={{
+                            padding: '12px 8px',
+                            borderRadius: 'var(--radius-md)',
+                            border: '2px solid var(--border-color)',
+                            fontWeight: 700,
+                            fontSize: '0.9rem'
+                          }}
+                        >
+                          <option value="+91">🇮🇳 +91</option>
+                          <option value="+1">🇺🇸 +1</option>
+                          <option value="+44">🇬🇧 +44</option>
+                        </select>
+                        <input 
+                          type="tel"
+                          placeholder="98765 43210"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                          maxLength={10}
+                          style={{
+                            flex: 1,
+                            padding: '12px 14px',
+                            borderRadius: 'var(--radius-md)',
+                            border: '2px solid var(--border-color)',
+                            fontSize: '1rem',
+                            fontWeight: 700
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <input 
+                        type="email"
+                        placeholder="yourname@gmail.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '12px 14px',
+                          borderRadius: 'var(--radius-md)',
+                          border: '2px solid var(--border-color)',
+                          fontSize: '0.95rem',
+                          fontWeight: 600
+                        }}
+                      />
+                    )}
+
+                    {authError && <span style={{ color: '#EF4444', fontSize: '0.8rem', fontWeight: 600 }}>{authError}</span>}
+
+                    <button type="submit" className="cta-button">
+                      Get Verification Code <ArrowRight size={18} style={{ verticalAlign: 'middle' }} />
+                    </button>
+                  </form>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '2px 0' }}>
+                    <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }}></div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>OR</span>
+                    <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }}></div>
+                  </div>
+
+                  <button 
+                    className="option-card"
+                    onClick={handleGoogleAuth}
+                    style={{ justifyContent: 'center', gap: 10, padding: '12px', fontSize: '0.9rem' }}
+                  >
+                    Continue with Google
+                  </button>
+
+                  <button 
+                    onClick={handleNext}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-muted)',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      marginTop: 'auto',
+                      cursor: 'pointer',
+                      textDecoration: 'underline'
+                    }}
+                  >
+                    Skip & Continue as Guest →
+                  </button>
+                </>
+              ) : (
+                /* OTP Step */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, textAlign: 'center' }}>
+                  <KeyRound size={36} style={{ color: 'var(--primary)', margin: '0 auto' }} />
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>Enter 4-Digit Verification Code</h3>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
+                    {otp.map((d, idx) => (
+                      <input 
+                        key={idx}
+                        type="text"
+                        maxLength={1}
+                        value={d}
+                        readOnly
+                        style={{
+                          width: '50px',
+                          height: '54px',
+                          borderRadius: 'var(--radius-md)',
+                          border: '2px solid var(--primary)',
+                          textAlign: 'center',
+                          fontSize: '1.3rem',
+                          fontWeight: 800,
+                          background: 'var(--primary-light)',
+                          color: 'var(--primary)'
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  <button className="cta-button" onClick={handleVerifyOtp} disabled={isVerifying}>
+                    {isVerifying ? 'Verifying OTP...' : 'Verify OTP & Continue'}
+                  </button>
+                </div>
+              )}
+        </div>
+      )}
+
+      {/* STEP 2: NATIVE LANGUAGE SELECTION (Right after Auth!) */}
       {currentStep.id === 'language' && (
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <div style={{ position: 'relative', marginBottom: '16px' }}>
@@ -173,7 +407,7 @@ export function OnboardingFlow({ onComplete, soundEnabled }) {
         </div>
       )}
 
-      {/* STEP 2: English Level Assessment */}
+      {/* STEP 3: English Level Assessment */}
       {currentStep.id === 'level' && (
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <div className="option-list" style={{ flex: 1 }}>
@@ -197,7 +431,7 @@ export function OnboardingFlow({ onComplete, soundEnabled }) {
         </div>
       )}
 
-      {/* STEP 3: Profile Form */}
+      {/* STEP 4: Profile Form */}
       {currentStep.id === 'profile' && (
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '16px' }}>
           <div>
@@ -262,7 +496,7 @@ export function OnboardingFlow({ onComplete, soundEnabled }) {
         </div>
       )}
 
-      {/* STEP 4: Motivation */}
+      {/* STEP 5: Motivation */}
       {currentStep.id === 'motivation' && (
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <div className="option-list" style={{ flex: 1, maxHeight: '420px' }}>
@@ -295,7 +529,7 @@ export function OnboardingFlow({ onComplete, soundEnabled }) {
         </div>
       )}
 
-      {/* STEP 5: Profession */}
+      {/* STEP 6: Profession */}
       {currentStep.id === 'profession' && (
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <div className="option-list" style={{ flex: 1, maxHeight: '420px' }}>
@@ -319,7 +553,7 @@ export function OnboardingFlow({ onComplete, soundEnabled }) {
         </div>
       )}
 
-      {/* STEP 6: Target Timeline */}
+      {/* STEP 7: Target Timeline */}
       {currentStep.id === 'timeline' && (
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <div className="option-list" style={{ flex: 1 }}>
@@ -343,7 +577,7 @@ export function OnboardingFlow({ onComplete, soundEnabled }) {
         </div>
       )}
 
-      {/* STEP 7: Challenges */}
+      {/* STEP 8: Challenges */}
       {currentStep.id === 'challenge' && (
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <div className="option-list" style={{ flex: 1, maxHeight: '420px' }}>
@@ -376,7 +610,7 @@ export function OnboardingFlow({ onComplete, soundEnabled }) {
         </div>
       )}
 
-      {/* STEP 8: Study Time */}
+      {/* STEP 9: Study Time */}
       {currentStep.id === 'studyTime' && (
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <div className="option-list" style={{ flex: 1 }}>
@@ -400,7 +634,7 @@ export function OnboardingFlow({ onComplete, soundEnabled }) {
         </div>
       )}
 
-      {/* STEP 9: Daily Time */}
+      {/* STEP 10: Daily Time */}
       {currentStep.id === 'dailyTime' && (
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <div className="option-list" style={{ flex: 1 }}>
@@ -424,7 +658,7 @@ export function OnboardingFlow({ onComplete, soundEnabled }) {
         </div>
       )}
 
-      {/* STEP 10: Support Style */}
+      {/* STEP 11: Support Style */}
       {currentStep.id === 'supportStyle' && (
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <div className="option-list" style={{ flex: 1 }}>
@@ -448,7 +682,7 @@ export function OnboardingFlow({ onComplete, soundEnabled }) {
         </div>
       )}
 
-      {/* STEP 11: Notification / Habit Reminder */}
+      {/* STEP 12: Notification / Habit Reminder */}
       {currentStep.id === 'habitReminder' && (
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '12px' }}>
           <div style={{
@@ -488,7 +722,7 @@ export function OnboardingFlow({ onComplete, soundEnabled }) {
         </div>
       )}
 
-      {/* STEP 12: AI Coach Sia Welcome Screen & Personalized Profile Summary */}
+      {/* STEP 13: AI Coach Sia Welcome Screen & Personalized Profile Summary */}
       {currentStep.id === 'profileSummary' && (
         <div className="ai-summary-card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div className="avatar-wrapper">

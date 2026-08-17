@@ -1,6 +1,12 @@
-// Structure for all 12 Onboarding Steps matching the reference video
+// Structure for Onboarding Steps matching requested flow:
+// Splash Screen -> Login & Authentication -> Native Language Selection -> Rest of Onboarding
 
 export const ONBOARDING_STEPS = [
+  {
+    id: 'auth',
+    type: 'authentication',
+    titleKey: 'authTitle'
+  },
   {
     id: 'language',
     type: 'single-select-list',

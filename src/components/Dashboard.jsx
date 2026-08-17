@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Flame, Zap, Clock, Play, CheckCircle, Award, Volume2, Sparkles, BookOpen, ChevronRight } from 'lucide-react';
+import { Flame, Zap, Clock, Play, CheckCircle, Award, Volume2, Sparkles, BookOpen, ChevronRight, LogOut } from 'lucide-react';
 import { DAILY_QUIZZES } from '../data/practiceScenarios';
 import { speechService } from '../services/speechService';
 import confetti from 'canvas-confetti';
 
-export function Dashboard({ userData, authUser, onOpenAuth, exp, streak, onStartPractice, onAddExp }) {
+export function Dashboard({ userData, authUser, onOpenAuth, onLogout, exp, streak, onStartPractice, onAddExp }) {
   const [activeQuizIndex, setActiveQuizIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [quizSuccess, setQuizSuccess] = useState(false);
@@ -39,15 +39,26 @@ export function Dashboard({ userData, authUser, onOpenAuth, exp, streak, onStart
           </p>
         </div>
 
-        {!authUser && (
-          <button 
-            className="cta-button"
-            onClick={onOpenAuth}
-            style={{ width: 'auto', padding: '8px 16px', fontSize: '0.82rem', borderRadius: 20 }}
-          >
-            Log In
-          </button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {authUser ? (
+            <button 
+              className="icon-btn"
+              onClick={onLogout}
+              title="Log Out of SpeakX"
+              style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+            >
+              <LogOut size={18} />
+            </button>
+          ) : (
+            <button 
+              className="cta-button"
+              onClick={onOpenAuth}
+              style={{ width: 'auto', padding: '8px 16px', fontSize: '0.82rem', borderRadius: 20 }}
+            >
+              Log In
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Stats Cards */}

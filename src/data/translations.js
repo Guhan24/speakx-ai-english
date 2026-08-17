@@ -20,6 +20,7 @@ export const LANGUAGES = [
 
 export const TRANSLATIONS = {
   en: {
+    authTitle: "Login / Register to SpeakX",
     langQuestion: "Which language do you speak at home?",
     levelQuestion: "What is your English level?",
     levelOptions: [
@@ -108,6 +109,7 @@ export const TRANSLATIONS = {
     continue: "Continue"
   },
   ta: {
+    authTitle: "SpeakX-ல் உள்நுழையவும் / பதிவு செய்யவும்",
     langQuestion: "வீட்டில் நீங்கள் எந்த மொழி பேசுகிறீர்கள்?",
     levelQuestion: "உங்கள் English level என்ன?",
     levelOptions: [
