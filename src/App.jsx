@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { MobileFrame } from './components/MobileFrame';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { Dashboard } from './components/Dashboard';
 import { VoiceStudio } from './components/VoiceStudio';
+import { PremiumView } from './components/PremiumView';
+import { ProgressView } from './components/ProgressView';
 import { Navigation } from './components/Navigation';
 import { AuthModal } from './components/AuthModal';
 
@@ -20,7 +22,7 @@ export default function App() {
 
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [userData, setUserData] = useState(null);
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'premium' | 'aicoach' | 'progress'
 
   // Gamification state
   const [exp, setExp] = useState(120);
@@ -35,16 +37,15 @@ export default function App() {
     if (window.confirm("Are you sure you want to log out of SpeakX?")) {
       setAuthUser(null);
       localStorage.removeItem('speakx_auth_user');
+      setHasCompletedOnboarding(false);
+      setUserData(null);
+      setActiveTab('home');
     }
   };
 
   const handleOnboardingComplete = (data) => {
     setUserData(data);
     setHasCompletedOnboarding(true);
-    // If not logged in yet, prompt auth modal gently
-    if (!authUser) {
-      setTimeout(() => setIsAuthModalOpen(true), 1200);
-    }
   };
 
   const handleAddExp = (points) => {
@@ -72,7 +73,7 @@ export default function App() {
         />
       ) : (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
-          {activeTab === 'home' ? (
+          {activeTab === 'home' && (
             <Dashboard 
               userData={userData}
               authUser={authUser}
@@ -80,13 +81,30 @@ export default function App() {
               onLogout={handleLogout}
               exp={exp}
               streak={streak}
-              onStartPractice={() => setActiveTab('studio')}
+              onStartPractice={() => setActiveTab('aicoach')}
               onAddExp={handleAddExp}
             />
-          ) : (
+          )}
+
+          {activeTab === 'premium' && (
+            <PremiumView 
+              onBackToHome={() => setActiveTab('home')}
+              onAddExp={handleAddExp}
+            />
+          )}
+
+          {activeTab === 'aicoach' && (
             <VoiceStudio 
               userData={userData}
               onAddExp={handleAddExp}
+            />
+          )}
+
+          {activeTab === 'progress' && (
+            <ProgressView 
+              userData={userData}
+              exp={exp}
+              streak={streak}
             />
           )}
 

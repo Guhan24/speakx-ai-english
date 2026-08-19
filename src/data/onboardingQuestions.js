@@ -71,10 +71,5 @@ export const ONBOARDING_STEPS = [
     id: 'habitReminder',
     type: 'notification-permission',
     titleKey: 'habitTitle'
-  },
-  {
-    id: 'profileSummary',
-    type: 'ai-summary',
-    titleKey: 'summaryWelcome'
   }
 ];

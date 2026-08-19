@@ -544,18 +544,21 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Navigation Bar */
+/* SpeakX Exact Bottom Navigation Bar with Floating Central AI Coach Avatar */
 .bottom-nav {
-  height: 64px;
+  height: 72px;
   background: var(--bg-card);
   border-top: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-around;
-  padding: 0 12px;
+  padding: 0 8px;
+  position: relative;
+  z-index: 80;
 }
 
 .nav-item {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -564,11 +567,144 @@ body {
   border: none;
   color: var(--text-muted);
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: color 0.2s ease;
+  position: relative;
 }
 
 .nav-item.active {
   color: var(--primary);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  width: 28px;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 2px;
+}
+
+/* Floating AI Coach Central Tab Button (Matches Uploaded Screenshot!) */
+.nav-item.ai-coach-tab {
+  margin-top: -24px;
+}
+
+.floating-avatar-btn {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #ffffff;
+  box-shadow: 0 6px 18px rgba(255, 76, 0, 0.35);
+  background: #FFF;
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.floating-avatar-btn:hover {
+  transform: scale(1.08);
+}
+
+.floating-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* SpeakX Premium Screen Card Styles */
+.premium-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background: linear-gradient(180deg, #FFF9F5 0%, #FFFFFF 100%);
+  overflow-y: auto;
+}
+
+.premium-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.premium-title {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--primary);
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.premium-hero-headline {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-align: center;
+  color: var(--text-main);
+  line-height: 1.3;
+  margin-bottom: 24px;
+}
+
+.premium-feature-card {
+  background: #FFFDFB;
+  border: 1px solid #FFEBE0;
+  border-radius: 24px;
+  padding: 24px 20px;
+  box-shadow: 0 10px 30px rgba(255, 76, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.premium-card-title {
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.premium-card-title span {
+  color: var(--primary);
+}
+
+.premium-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.premium-feature-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #FF6B26 0%, #FF4C00 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(255, 76, 0, 0.25);
+}
+
+.premium-feature-text h4 {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.premium-feature-text p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.3;
 }
